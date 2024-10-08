@@ -23,10 +23,14 @@ func (self *MessageQueue) Push(m *pb.Message) {
 }
 
 func (self *MessageQueue) Pop() *pb.Message {
-	if 
 	h := *self
 	var m *pb.Message
+
 	l := len(h)
+	if l == 0 {
+		return nil
+	}
+
 	m, *self = h[0], h[1:l]
 	return m
 }
@@ -36,7 +40,7 @@ func NewQueue() *MessageQueue {
 }
 
 var chatMembers = make(map[string]bool)
-var buffers = make(map[string]*MessageQueue)
+var messageBuffers = make(map[string]*MessageQueue)
 
 func main() {
 	setLog()
@@ -66,15 +70,15 @@ func (s *Server) startServer() {
 }
 
 func (s *Server) PublishMessage(_ context.Context, in *pb.Message) (*pb.Empty, error) {
-	//log.Printf(in.Timestamp + " : " + in.Sender + " : " + in.Text)
 	if !chatMembers[in.Sender] {
 		return nil, fmt.Errorf("User %s is not in chat", in.Sender)
 	}
 
-	// update server time to client time
+	// Update server time to client time
 	s.updateTime(in.Time)
 
-	for k, v := range buffers {
+	// Add the message to the buffer of all other chat members
+	for k, v := range messageBuffers {
 		if k == in.Sender {
 			continue
 		}
@@ -88,10 +92,11 @@ func (s *Server) JoinChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, erro
 	if chatMembers[in.Name] {
 		return nil, fmt.Errorf("User %s already in chat", in.Name)
 	}
-	buffers[in.Name] = NewQueue()
 
-	log.Println(in.Name + " joined the chat")
 	chatMembers[in.Name] = true
+	messageBuffers[in.Name] = NewQueue()
+	log.Println(in.Name + " joined the chat")
+
 	return &pb.Empty{}, nil
 }
 
@@ -106,9 +111,10 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 }
 
 func (s *Server) GetUpdates(_ context.Context, in *pb.ClientInfo) (*pb.Message, error) {
-	m := buffers[in.Name].Pop()
+	m := messageBuffers[in.Name].Pop()
 	return m, nil
 }
+
 func setLog() {
 	f, err := os.OpenFile("server.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

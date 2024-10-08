@@ -23,6 +23,10 @@ func monitorServer(c pb.ChittyChatClient, info *pb.ClientInfo, client *Client) {
 		if err != nil {
 			log.Printf("could not get update from server")
 		}
+		if r == nil {
+			log.Printf("there are no updates")
+		}
+
 		client.syncTime(r.Time)
 		log.Printf(r.Sender + " : " + r.Text)
 	}
@@ -55,6 +59,7 @@ func main() {
 
 	// Initialize client
 	client := &Client{name: clientName, time: 0}
+	go monitorServer(c, info, client)
 
 	// Make scanner
 	scanner := bufio.NewScanner(os.Stdin)
