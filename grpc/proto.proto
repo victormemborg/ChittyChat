@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "github.com/victormemborg/ChittyChat/grpc";
+
+service ChittyChat {
+    // Sends a message to the server to broadcast
+    rpc PublishMessage (Message) returns (Empty);
+
+    rpc JoinChat (ClientInfo) returns (Empty);
+
+    rpc LeaveChat (ClientInfo) returns (Empty);
+
+    rpc GetUpdates (ClientInfo) returns (Message);
+}
+
+message Message {
+    string sender = 1;
+    string text = 2;
+    int32 time = 3;
+}
+
+message ClientInfo {
+    string name = 1;
+}
+
+message Empty {}
