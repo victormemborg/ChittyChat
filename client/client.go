@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	pb "github.com/victormemborg/ChittyChat/grpc"
@@ -19,27 +18,27 @@ type Client struct {
 }
 
 func monitorServer(c pb.ChittyChatClient, info *pb.ClientInfo, client *Client) {
-	stream, err := c.GetUpdates(context.Background(), info)
+	stream, err := c.Listen(context.Background(), info)
 	if err != nil {
-		log.Fatalf("Unable to monitor server: %v", err)
+		fmt.Printf("Unable to monitor server: %v", err)
 	}
 
 	// We will keep listening for updates from the server
 	for {
 		message, err := stream.Recv()
 		if err == io.EOF {
-			log.Printf("Server stream closed at %d", client.time)
+			fmt.Printf("Server stream closed at %d", client.time)
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error recieving an update: %v", err)
+			fmt.Printf("Error recieving an update: %v", err)
 		}
 
 		// sync client time with server time
 		client.syncTime(message.Time)
 
 		// print message
-		log.Printf("%s: %s (time: %d)", message.Sender, message.Text, message.Time)
+		fmt.Printf("%s: %s (time: %d)\n", message.Sender, message.Text, message.Time)
 	}
 }
 
@@ -55,14 +54,14 @@ func main() {
 	// Establish connection
 	conn, err := grpc.NewClient("localhost:5050", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		fmt.Printf("did not connect: %v", err)
 	}
 	c := pb.NewChittyChatClient(conn)
 
 	// Join chat
 	_, err = c.JoinChat(context.Background(), info)
 	if err != nil {
-		log.Fatalf("couldnt join chat: %v", err)
+		fmt.Printf("couldnt join chat: %v", err)
 	}
 
 	// Initialize client
@@ -81,7 +80,7 @@ func main() {
 		if text == ".exit" {
 			_, err = c.LeaveChat(context.Background(), info)
 			if err != nil {
-				log.Fatalf("couldnt exit chat: %v", err)
+				fmt.Printf("couldnt exit chat: %v", err)
 			}
 			break
 		}
@@ -99,12 +98,4 @@ func main() {
 			fmt.Println("An error occurred while sending message")
 		}
 	}
-}
-
-func setLog() {
-	f, err := os.OpenFile("clients.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	log.SetOutput(f)
 }

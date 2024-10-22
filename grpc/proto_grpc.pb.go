@@ -22,7 +22,7 @@ const (
 	ChittyChat_PublishMessage_FullMethodName = "/ChittyChat/PublishMessage"
 	ChittyChat_JoinChat_FullMethodName       = "/ChittyChat/JoinChat"
 	ChittyChat_LeaveChat_FullMethodName      = "/ChittyChat/LeaveChat"
-	ChittyChat_GetUpdates_FullMethodName     = "/ChittyChat/GetUpdates"
+	ChittyChat_Listen_FullMethodName         = "/ChittyChat/Listen"
 )
 
 // ChittyChatClient is the client API for ChittyChat service.
@@ -33,7 +33,7 @@ type ChittyChatClient interface {
 	PublishMessage(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Empty, error)
 	JoinChat(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (*Empty, error)
 	LeaveChat(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (*Empty, error)
-	GetUpdates(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error)
+	Listen(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error)
 }
 
 type chittyChatClient struct {
@@ -74,9 +74,9 @@ func (c *chittyChatClient) LeaveChat(ctx context.Context, in *ClientInfo, opts .
 	return out, nil
 }
 
-func (c *chittyChatClient) GetUpdates(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error) {
+func (c *chittyChatClient) Listen(ctx context.Context, in *ClientInfo, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Message], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ChittyChat_ServiceDesc.Streams[0], ChittyChat_GetUpdates_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ChittyChat_ServiceDesc.Streams[0], ChittyChat_Listen_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *chittyChatClient) GetUpdates(ctx context.Context, in *ClientInfo, opts 
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ChittyChat_GetUpdatesClient = grpc.ServerStreamingClient[Message]
+type ChittyChat_ListenClient = grpc.ServerStreamingClient[Message]
 
 // ChittyChatServer is the server API for ChittyChat service.
 // All implementations must embed UnimplementedChittyChatServer
@@ -101,7 +101,7 @@ type ChittyChatServer interface {
 	PublishMessage(context.Context, *Message) (*Empty, error)
 	JoinChat(context.Context, *ClientInfo) (*Empty, error)
 	LeaveChat(context.Context, *ClientInfo) (*Empty, error)
-	GetUpdates(*ClientInfo, grpc.ServerStreamingServer[Message]) error
+	Listen(*ClientInfo, grpc.ServerStreamingServer[Message]) error
 	mustEmbedUnimplementedChittyChatServer()
 }
 
@@ -121,8 +121,8 @@ func (UnimplementedChittyChatServer) JoinChat(context.Context, *ClientInfo) (*Em
 func (UnimplementedChittyChatServer) LeaveChat(context.Context, *ClientInfo) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LeaveChat not implemented")
 }
-func (UnimplementedChittyChatServer) GetUpdates(*ClientInfo, grpc.ServerStreamingServer[Message]) error {
-	return status.Errorf(codes.Unimplemented, "method GetUpdates not implemented")
+func (UnimplementedChittyChatServer) Listen(*ClientInfo, grpc.ServerStreamingServer[Message]) error {
+	return status.Errorf(codes.Unimplemented, "method Listen not implemented")
 }
 func (UnimplementedChittyChatServer) mustEmbedUnimplementedChittyChatServer() {}
 func (UnimplementedChittyChatServer) testEmbeddedByValue()                    {}
@@ -199,16 +199,16 @@ func _ChittyChat_LeaveChat_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChittyChat_GetUpdates_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _ChittyChat_Listen_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ClientInfo)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ChittyChatServer).GetUpdates(m, &grpc.GenericServerStream[ClientInfo, Message]{ServerStream: stream})
+	return srv.(ChittyChatServer).Listen(m, &grpc.GenericServerStream[ClientInfo, Message]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ChittyChat_GetUpdatesServer = grpc.ServerStreamingServer[Message]
+type ChittyChat_ListenServer = grpc.ServerStreamingServer[Message]
 
 // ChittyChat_ServiceDesc is the grpc.ServiceDesc for ChittyChat service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -232,8 +232,8 @@ var ChittyChat_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetUpdates",
-			Handler:       _ChittyChat_GetUpdates_Handler,
+			StreamName:    "Listen",
+			Handler:       _ChittyChat_Listen_Handler,
 			ServerStreams: true,
 		},
 	},

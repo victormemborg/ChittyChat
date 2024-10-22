@@ -75,6 +75,7 @@ func (s *Server) PublishMessage(_ context.Context, in *pb.Message) (*pb.Empty, e
 
 	// Update server time to client time
 	s.updateTime(in.Time)
+	in.Time = s.time
 
 	log.Println(in.Sender + ": " + in.Text + " (time: " + fmt.Sprint(in.Time) + ")")
 
@@ -94,9 +95,12 @@ func (s *Server) JoinChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, erro
 		return nil, fmt.Errorf("User %s already in chat", in.Name)
 	}
 
+	// Increment server time
+	s.time++
+
 	chatMembers[in.Name] = true
-	messageBuffers[in.Name] = NewQueue()
-	log.Println(in.Name + " joined the chat")
+	messageBuffers[in.Name] = NewQueue() // create a new message buffer for the new chat member - NOTE: this overwrites any existing buffer
+	log.Println(in.Name + " joined the chat (time: " + fmt.Sprint(s.time) + ")")
 
 	// Add a join message to the buffer of all other chat members
 	for k, v := range messageBuffers {
@@ -118,9 +122,11 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 		return nil, fmt.Errorf("User %s is not in chat", in.Name)
 	}
 
-	log.Println(in.Name + " left the chat")
+	// Increment server time
+	s.time++
+
+	log.Println(in.Name + " left the chat (time: " + fmt.Sprint(s.time) + ")")
 	chatMembers[in.Name] = false
-	//TODO: Maybe delete the message buffer of the user that left?
 	//TODO: Maybe sync and increment server time (im not sure if this is a part of the implemantation)?
 
 	// Add a leave message to the buffer of all other chat members
@@ -137,7 +143,7 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) GetUpdates(in *pb.ClientInfo, stream pb.ChittyChat_GetUpdatesServer) error {
+func (s *Server) Listen(in *pb.ClientInfo, stream pb.ChittyChat_ListenServer) error {
 	if !chatMembers[in.Name] {
 		return fmt.Errorf("User %s is not in chat", in.Name)
 	}
@@ -145,7 +151,11 @@ func (s *Server) GetUpdates(in *pb.ClientInfo, stream pb.ChittyChat_GetUpdatesSe
 	messageQueue := messageBuffers[in.Name]
 
 	// send messages from queue to client
+	// if a chatmember leaves the chat, it will stop looping
 	for {
+		if !chatMembers[in.Name] {
+			return fmt.Errorf("User %s is not in the chat", in.Name)
+		}
 		if len(*messageQueue) > 0 {
 			message := messageQueue.Pop()
 			err := stream.Send(message)

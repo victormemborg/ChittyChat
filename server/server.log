@@ -1,52 +1,11 @@
-2024/10/22 14:23:56 server listening at [::]:5050
-2024/10/22 14:24:45 chad joined the chat
-2024/10/22 14:26:35 server listening at [::]:5050
-2024/10/22 14:26:41 chad joined the chat
-2024/10/22 14:27:54 nihao joined the chat
-2024/10/22 14:45:03 server listening at [::]:5050
-2024/10/22 14:45:09 nihao joined the chat
-2024/10/22 14:45:34 test joined the chat
-2024/10/22 14:46:50 Chad joined the chat
-2024/10/22 14:48:09 ChadTest joined the chat
-2024/10/22 14:48:24 ChadTest2 joined the chat
-2024/10/22 14:49:20 ChadTest2 left the chat
-2024/10/22 14:53:26 server listening at [::]:5050
-2024/10/22 14:53:32 ChadTest joined the chat
-2024/10/22 14:53:38 ChadTest2 joined the chat
-2024/10/22 15:17:13 server listening at [::]:5050
-2024/10/22 15:17:32 Axel joined the chat
-2024/10/22 15:17:42 Chad joined the chat
-2024/10/22 15:19:08 Axel left the chat
-2024/10/22 15:26:39 server listening at [::]:5050
-2024/10/22 15:26:44 Axel joined the chat
-2024/10/22 15:26:47 Chad joined the chat
-2024/10/22 15:26:50 Chad left the chat
-2024/10/22 15:27:55 server listening at [::]:5050
-2024/10/22 15:28:04 Axel joined the chat
-2024/10/22 15:28:07 Chad joined the chat
-2024/10/22 15:28:10 Axel left the chat
-2024/10/22 15:36:48 server listening at [::]:5050
-2024/10/22 15:36:52 Axel joined the chat
-2024/10/22 15:36:55 Chad joined the chat
-2024/10/22 15:36:58 Chad: test
-2024/10/22 15:37:17 server listening at [::]:5050
-2024/10/22 15:37:22 Axel joined the chat
-2024/10/22 15:37:23 Axel: test (time: 1)
-2024/10/22 15:39:19 Chad joined the chat
-2024/10/22 15:39:26 Philip joined the chat
-2024/10/22 15:39:28 Philip: sd (time: 1)
-2024/10/22 15:39:40 Chad: s (time: 5)
-2024/10/22 15:52:39 server listening at [::]:5050
-2024/10/22 15:52:44 Axel joined the chat
-2024/10/22 15:52:46 Chad joined the chat
-2024/10/22 15:52:47 Philip joined the chat
-2024/10/22 15:52:47 Philip: test (time: 1)
-2024/10/22 15:52:52 Axel: t (time: 1)
-2024/10/22 15:53:53 server listening at [::]:5050
-2024/10/22 15:53:57 Axel joined the chat
-2024/10/22 15:53:59 Chad joined the chat
-2024/10/22 15:54:01 Philip joined the chat
-2024/10/22 15:54:01 Philip: test (time: 1)
-2024/10/22 15:54:07 Chad: d (time: 2)
-2024/10/22 15:54:16 Axel: s (time: 3)
-2024/10/22 15:54:39 Axel left the chat
+2024/10/22 18:01:30 server listening at [::]:5050
+2024/10/22 18:01:37 Axel joined the chat (time: 1)
+2024/10/22 18:01:40 Victor joined the chat (time: 2)
+2024/10/22 18:01:43 Philip joined the chat (time: 3)
+2024/10/22 18:01:45 Philip: hej (time: 4)
+2024/10/22 18:01:56 Victor: hej philip (time: 6)
+2024/10/22 18:03:20 Axel: hej victor (time: 8)
+2024/10/22 18:03:57 Philip: bye (time: 10)
+2024/10/22 18:03:58 Philip left the chat (time: 11)
+2024/10/22 18:04:12 Victor left the chat (time: 12)
+2024/10/22 18:04:16 Axel left the chat (time: 13)
