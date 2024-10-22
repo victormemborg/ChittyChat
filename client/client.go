@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -18,26 +19,33 @@ type Client struct {
 }
 
 func monitorServer(c pb.ChittyChatClient, info *pb.ClientInfo, client *Client) {
+	stream, err := c.GetUpdates(context.Background(), info)
+	if err != nil {
+		log.Fatalf("Unable to monitor server: %v", err)
+	}
+
+	// We will keep listening for updates from the server
 	for {
-		r, err := c.GetUpdates(context.Background(), info)
-		if err != nil {
-			log.Printf("could not get update from server")
+		message, err := stream.Recv()
+		if err == io.EOF {
+			log.Printf("Server stream closed at %d", client.time)
+			break
 		}
-		if r == nil {
-			log.Printf("there are no updates")
+		if err != nil {
+			log.Fatalf("Error recieving an update: %v", err)
 		}
 
-		client.syncTime(r.Time)
-		log.Printf(r.Sender + " : " + r.Text)
+		// sync client time with server time
+		client.syncTime(message.Time)
+
+		// print message
+		log.Printf("%s: %s (time: %d)", message.Sender, message.Text, message.Time)
 	}
 }
 
 // function to sync client with server time - maybe not needed
 func (c *Client) syncTime(serverTime int32) {
-	if serverTime > c.time {
-		c.time = serverTime
-	}
-	c.time++
+	c.time = max(c.time, serverTime)
 }
 
 func main() {
@@ -65,6 +73,10 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		text := scanner.Text()
+		if len(text) > 128 {
+			fmt.Println("Error: Message is too long")
+			continue
+		}
 
 		if text == ".exit" {
 			_, err = c.LeaveChat(context.Background(), info)

@@ -10,7 +10,7 @@ service ChittyChat {
 
     rpc LeaveChat (ClientInfo) returns (Empty);
 
-    rpc GetUpdates (ClientInfo) returns (Message);
+    rpc GetUpdates (ClientInfo) returns (stream Message);
 }
 
 message Message {

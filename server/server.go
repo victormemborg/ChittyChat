@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	pb "github.com/victormemborg/ChittyChat/grpc"
 	"google.golang.org/grpc"
@@ -49,9 +50,7 @@ func main() {
 }
 
 func (s *Server) updateTime(clientTime int32) {
-	if clientTime > s.time {
-		s.time = clientTime
-	}
+	s.time = max(s.time, clientTime) // sync server time with client time
 	s.time++
 }
 
@@ -77,6 +76,8 @@ func (s *Server) PublishMessage(_ context.Context, in *pb.Message) (*pb.Empty, e
 	// Update server time to client time
 	s.updateTime(in.Time)
 
+	log.Println(in.Sender + ": " + in.Text + " (time: " + fmt.Sprint(in.Time) + ")")
+
 	// Add the message to the buffer of all other chat members
 	for k, v := range messageBuffers {
 		if k == in.Sender {
@@ -97,6 +98,18 @@ func (s *Server) JoinChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, erro
 	messageBuffers[in.Name] = NewQueue()
 	log.Println(in.Name + " joined the chat")
 
+	// Add a join message to the buffer of all other chat members
+	for k, v := range messageBuffers {
+		if k == in.Name {
+			continue
+		}
+		v.Push(&pb.Message{
+			Sender: "Server",
+			Text:   in.Name + " joined the chat",
+			Time:   s.time,
+		})
+	}
+
 	return &pb.Empty{}, nil
 }
 
@@ -107,12 +120,42 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 
 	log.Println(in.Name + " left the chat")
 	chatMembers[in.Name] = false
+	//TODO: Maybe delete the message buffer of the user that left?
+	//TODO: Maybe sync and increment server time (im not sure if this is a part of the implemantation)?
+
+	// Add a leave message to the buffer of all other chat members
+	for k, v := range messageBuffers {
+		if k == in.Name {
+			continue
+		}
+		v.Push(&pb.Message{
+			Sender: "Server",
+			Text:   in.Name + " left the chat",
+			Time:   s.time,
+		})
+	}
 	return &pb.Empty{}, nil
 }
 
-func (s *Server) GetUpdates(_ context.Context, in *pb.ClientInfo) (*pb.Message, error) {
-	m := messageBuffers[in.Name].Pop()
-	return m, nil
+func (s *Server) GetUpdates(in *pb.ClientInfo, stream pb.ChittyChat_GetUpdatesServer) error {
+	if !chatMembers[in.Name] {
+		return fmt.Errorf("User %s is not in chat", in.Name)
+	}
+
+	messageQueue := messageBuffers[in.Name]
+
+	// send messages from queue to client
+	for {
+		if len(*messageQueue) > 0 {
+			message := messageQueue.Pop()
+			err := stream.Send(message)
+			if err != nil {
+				return err
+			}
+		}
+		// how often to check for new messages
+		time.Sleep(500 * time.Millisecond)
+	}
 }
 
 func setLog() {
