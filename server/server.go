@@ -14,7 +14,6 @@ import (
 
 type Server struct {
 	pb.UnimplementedChittyChatServer
-	time int32
 }
 
 type MessageQueue []*pb.Message
@@ -49,11 +48,6 @@ func main() {
 	s.startServer()
 }
 
-func (s *Server) updateTime(clientTime int32) {
-	s.time = max(s.time, clientTime) // sync server time with client time
-	s.time++
-}
-
 func (s *Server) startServer() {
 	grpcServer := grpc.NewServer()
 	listener, err := net.Listen("tcp", ":5050")
@@ -73,11 +67,7 @@ func (s *Server) PublishMessage(_ context.Context, in *pb.Message) (*pb.Empty, e
 		return nil, fmt.Errorf("User %s is not in chat", in.Sender)
 	}
 
-	// Update server time to client time
-	s.updateTime(in.Time)
-	in.Time = s.time
-
-	log.Println(in.Sender + ": " + in.Text + " (time: " + fmt.Sprint(in.Time) + ")")
+	log.Printf("%s: %s (%s's time: %d)", in.Sender, in.Text, in.Sender, in.Time)
 
 	// Add the message to the buffer of all other chat members
 	for k, v := range messageBuffers {
@@ -95,12 +85,9 @@ func (s *Server) JoinChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, erro
 		return nil, fmt.Errorf("User %s already in chat", in.Name)
 	}
 
-	// Increment server time
-	s.time++
-
 	chatMembers[in.Name] = true
 	messageBuffers[in.Name] = NewQueue() // create a new message buffer for the new chat member - NOTE: this overwrites any existing buffer
-	log.Println(in.Name + " joined the chat (time: " + fmt.Sprint(s.time) + ")")
+	log.Printf("%s joined the chat (%s's time %d)", in.Name, in.Name, in.ClientTime)
 
 	// Add a join message to the buffer of all other chat members
 	for k, v := range messageBuffers {
@@ -110,7 +97,7 @@ func (s *Server) JoinChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, erro
 		v.Push(&pb.Message{
 			Sender: "Server",
 			Text:   in.Name + " joined the chat",
-			Time:   s.time,
+			Time:   in.ClientTime,
 		})
 	}
 
@@ -122,10 +109,7 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 		return nil, fmt.Errorf("User %s is not in chat", in.Name)
 	}
 
-	// Increment server time
-	s.time++
-
-	log.Println(in.Name + " left the chat (time: " + fmt.Sprint(s.time) + ")")
+	log.Printf("%s left the chat (%s's time %d)", in.Name, in.Name, in.ClientTime)
 	chatMembers[in.Name] = false
 	//TODO: Maybe sync and increment server time (im not sure if this is a part of the implemantation)?
 
@@ -137,7 +121,7 @@ func (s *Server) LeaveChat(_ context.Context, in *pb.ClientInfo) (*pb.Empty, err
 		v.Push(&pb.Message{
 			Sender: "Server",
 			Text:   in.Name + " left the chat",
-			Time:   s.time,
+			Time:   in.ClientTime,
 		})
 	}
 	return &pb.Empty{}, nil

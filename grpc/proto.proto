@@ -21,6 +21,7 @@ message Message {
 
 message ClientInfo {
     string name = 1;
+    int32 clientTime = 2;
 }
 
 message Empty {}

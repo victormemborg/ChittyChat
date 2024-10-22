@@ -34,17 +34,18 @@ func monitorServer(c pb.ChittyChatClient, info *pb.ClientInfo, client *Client) {
 			fmt.Printf("Error recieving an update: %v", err)
 		}
 
-		// sync client time with server time
+		// sync client time with other client time
+		client.time++
 		client.syncTime(message.Time)
 
 		// print message
-		fmt.Printf("%s: %s (time: %d)\n", message.Sender, message.Text, message.Time)
+		fmt.Printf("%s: %s (%s's time: %d)\n", message.Sender, message.Text, client.name, client.time)
 	}
 }
 
 // function to sync client with server time - maybe not needed
-func (c *Client) syncTime(serverTime int32) {
-	c.time = max(c.time, serverTime)
+func (c *Client) syncTime(otherClientTime int32) {
+	c.time = max(c.time, otherClientTime)
 }
 
 func main() {
@@ -77,7 +78,13 @@ func main() {
 			continue
 		}
 
+		if text == ".debug" {
+			fmt.Println(client.time)
+			continue
+		}
+
 		if text == ".exit" {
+			info.ClientTime = client.time
 			_, err = c.LeaveChat(context.Background(), info)
 			if err != nil {
 				fmt.Printf("couldnt exit chat: %v", err)
