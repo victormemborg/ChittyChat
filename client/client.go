@@ -84,6 +84,7 @@ func main() {
 		}
 
 		if text == ".exit" {
+			client.time++
 			info.ClientTime = client.time
 			_, err = c.LeaveChat(context.Background(), info)
 			if err != nil {
